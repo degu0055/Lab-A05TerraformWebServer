@@ -17,7 +17,6 @@ terraform {
 
 # Define providers and their config params
 provider "azurerm" {
-  # Leave the features block empty to accept all defaults
   features {}
 }
 
@@ -101,7 +100,7 @@ resource "azurerm_network_interface_security_group_association" "nic_nsg" {
 
 data "cloudinit_config" "init" {
   gzip          = false
-  base64_encode = false
+  base64_encode = true  # <-- Set this to true to encode as base64 (required by Azure)
 
   part {
     content_type = "text/x-shellscript"
@@ -132,13 +131,15 @@ resource "azurerm_linux_virtual_machine" "vm" {
     version   = "latest"
   }
 
-  computer_name  = "webvm"
+  computer_name                   = "webvm"
   disable_password_authentication = true
 
   admin_ssh_key {
     username   = var.admin_username
-    public_key = file("~/.ssh/id_rsa.pub")
+    public_key = file("/Users/romeodeguzmanii/.ssh/id_rsa.pub")
   }
 
-  custom_data = data.cloudinit_config.config.rendered
+  custom_data = data.cloudinit_config.init.rendered
 }
+
+
