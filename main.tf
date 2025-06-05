@@ -108,3 +108,37 @@ data "cloudinit_config" "init" {
     content      = file("init.sh")
   }
 }
+
+resource "azurerm_linux_virtual_machine" "vm" {
+  name                = "${var.labelPrefix}-A05-VM"
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_resource_group.rg.location
+  size                = "Standard_B1s"
+  admin_username      = var.admin_username
+  network_interface_ids = [
+    azurerm_network_interface.nic.id,
+  ]
+
+  os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+    name                 = "${var.labelPrefix}-A05-OSDisk"
+  }
+
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "18.04-LTS"
+    version   = "latest"
+  }
+
+  computer_name  = "webvm"
+  disable_password_authentication = true
+
+  admin_ssh_key {
+    username   = var.admin_username
+    public_key = file("~/.ssh/id_rsa.pub")
+  }
+
+  custom_data = data.cloudinit_config.config.rendered
+}
